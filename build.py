@@ -40,6 +40,8 @@ ALGO_BLURB = {
 MINERS = [
     # name, brand, algo, hashrate, unit, power W, price USD (street-price estimates)
     # ---------------- SHA-256 (BTC) ----------------
+    dict(slug="antminer-s23-hyd-3u", name="Antminer S23 Hyd 3U", brand="Bitmain", algo="SHA-256", hr=1160, unit="TH/s", power=11020, price=19500),
+    dict(slug="antminer-s23-hyd", name="Antminer S23 Hyd", brand="Bitmain", algo="SHA-256", hr=580, unit="TH/s", power=5510, price=9800),
     dict(slug="antminer-s23", name="Antminer S23", brand="Bitmain", algo="SHA-256", hr=318, unit="TH/s", power=3498, price=5400),
     dict(slug="antminer-s21-xp-hyd", name="Antminer S21 XP Hyd", brand="Bitmain", algo="SHA-256", hr=473, unit="TH/s", power=5676, price=9800),
     dict(slug="antminer-s21-xp", name="Antminer S21 XP", brand="Bitmain", algo="SHA-256", hr=270, unit="TH/s", power=3645, price=5999),

@@ -33,6 +33,12 @@ def main():
     print("mempool.space (BTC)…")
     mp_hash = get("https://mempool.space/api/v1/mining/hashrate/3d")
     btc_nethash_h = float(mp_hash["currentHashrate"])          # H/s
+    # transaction fees: average per-block fees over the last week (satoshis → BTC)
+    try:
+        fees = get("https://mempool.space/api/v1/mining/blocks/fees/1w")
+        avg_fee_btc = (sum(f["avgFees"] for f in fees) / len(fees)) / 1e8
+    except Exception:
+        avg_fee_btc = 0.0
     try:
         btc_usd = float(get("https://mempool.space/api/v1/prices")["USD"])
     except Exception:
@@ -66,7 +72,8 @@ def main():
 
     # ---- hashprice = $ revenue per hashrate unit per day ----
     BTC_REWARD, BTC_BLOCKS_DAY = 3.125, 144.0   # next halving ~2028
-    hp_sha256 = BTC_BLOCKS_DAY * BTC_REWARD * btc_usd / (btc_nethash_h / TH)
+    btc_block_total = BTC_REWARD + avg_fee_btc  # subsidy + tx fees (like asicminervalue)
+    hp_sha256 = BTC_BLOCKS_DAY * btc_block_total * btc_usd / (btc_nethash_h / TH)
 
     kas_coins_day = (86400.0 / kas_block_time) * kas_reward
     hp_kas = kas_coins_day * kas_usd / (kas_nethash_h / TH)
@@ -87,7 +94,7 @@ def main():
                       "kHeavyHash": round(hp_kas, 5),
                       "Scrypt": round(hp_scrypt, 4)},
         "networks": {
-            "BTC": {"nethash_eh": round(btc_nethash_h / 1e18, 1), "block_reward": BTC_REWARD},
+            "BTC": {"nethash_eh": round(btc_nethash_h / 1e18, 1), "block_reward": BTC_REWARD, "avg_fees_btc": round(avg_fee_btc, 4)},
             "KAS": {"nethash_ph": round(kas_nethash_h / 1e15, 1), "block_reward": round(kas_reward, 4)},
             "LTC": {"nethash_ph": round(ltc_nethash_h / 1e15, 2), "block_reward": LTC_REWARD},
             "DOGE": {"nethash_ph": round(doge_nethash_h / 1e15, 2), "block_reward": DOGE_REWARD},
