@@ -1,0 +1,8 @@
+dist/
+data.json
+shot-*.png
+*.zip
+refresh.log
+__pycache__/
+.pylibs/
+.venv*/
