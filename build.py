@@ -38,21 +38,56 @@ ALGO_BLURB = {
 }
 
 MINERS = [
-    # name, brand, algo, hashrate, unit, power W, price USD
+    # name, brand, algo, hashrate, unit, power W, price USD (street-price estimates)
+    # ---------------- SHA-256 (BTC) ----------------
+    dict(slug="antminer-s23", name="Antminer S23", brand="Bitmain", algo="SHA-256", hr=318, unit="TH/s", power=3498, price=5400),
+    dict(slug="antminer-s21-xp-hyd", name="Antminer S21 XP Hyd", brand="Bitmain", algo="SHA-256", hr=473, unit="TH/s", power=5676, price=9800),
     dict(slug="antminer-s21-xp", name="Antminer S21 XP", brand="Bitmain", algo="SHA-256", hr=270, unit="TH/s", power=3645, price=5999),
     dict(slug="antminer-s21-pro", name="Antminer S21 Pro", brand="Bitmain", algo="SHA-256", hr=234, unit="TH/s", power=3510, price=4200),
     dict(slug="antminer-s21-plus", name="Antminer S21+", brand="Bitmain", algo="SHA-256", hr=216, unit="TH/s", power=3564, price=3600),
+    dict(slug="antminer-s21-hyd", name="Antminer S21 Hyd", brand="Bitmain", algo="SHA-256", hr=335, unit="TH/s", power=5360, price=5400),
     dict(slug="antminer-s21", name="Antminer S21", brand="Bitmain", algo="SHA-256", hr=200, unit="TH/s", power=3500, price=2900),
+    dict(slug="bitdeer-sealminer-a2", name="Bitdeer SealMiner A2", brand="Bitdeer", algo="SHA-256", hr=226, unit="TH/s", power=3729, price=3900),
     dict(slug="whatsminer-m60s", name="Whatsminer M60S", brand="MicroBT", algo="SHA-256", hr=186, unit="TH/s", power=3441, price=2400),
+    dict(slug="avalon-a1566", name="Avalon A1566", brand="Canaan", algo="SHA-256", hr=185, unit="TH/s", power=3420, price=2300),
+    dict(slug="whatsminer-m60", name="Whatsminer M60", brand="MicroBT", algo="SHA-256", hr=172, unit="TH/s", power=3422, price=2050),
+    dict(slug="antminer-s19-xp-hyd", name="Antminer S19 XP Hyd", brand="Bitmain", algo="SHA-256", hr=255, unit="TH/s", power=5304, price=2900),
     dict(slug="antminer-s19-xp", name="Antminer S19 XP", brand="Bitmain", algo="SHA-256", hr=140, unit="TH/s", power=3010, price=1650),
+    dict(slug="avalon-a1466", name="Avalon A1466", brand="Canaan", algo="SHA-256", hr=150, unit="TH/s", power=3230, price=1700),
+    dict(slug="avalon-a1366", name="Avalon A1366", brand="Canaan", algo="SHA-256", hr=130, unit="TH/s", power=3250, price=1150),
+    dict(slug="antminer-s19k-pro", name="Antminer S19k Pro", brand="Bitmain", algo="SHA-256", hr=120, unit="TH/s", power=2760, price=1050),
+    dict(slug="antminer-s19j-pro-plus", name="Antminer S19j Pro+", brand="Bitmain", algo="SHA-256", hr=122, unit="TH/s", power=3355, price=900),
+    dict(slug="antminer-s19-pro", name="Antminer S19 Pro", brand="Bitmain", algo="SHA-256", hr=110, unit="TH/s", power=3250, price=780),
+    dict(slug="antminer-s19j-pro", name="Antminer S19j Pro", brand="Bitmain", algo="SHA-256", hr=104, unit="TH/s", power=3068, price=700),
+    dict(slug="antminer-s19", name="Antminer S19", brand="Bitmain", algo="SHA-256", hr=95, unit="TH/s", power=3250, price=600),
     dict(slug="whatsminer-m30s-plus-plus", name="Whatsminer M30S++", brand="MicroBT", algo="SHA-256", hr=112, unit="TH/s", power=3472, price=950),
+    dict(slug="whatsminer-m30s-plus", name="Whatsminer M30S+", brand="MicroBT", algo="SHA-256", hr=100, unit="TH/s", power=3400, price=780),
+    dict(slug="whatsminer-m30s", name="Whatsminer M30S", brand="MicroBT", algo="SHA-256", hr=88, unit="TH/s", power=3344, price=600),
+    dict(slug="avalon-a1346", name="Avalon A1346", brand="Canaan", algo="SHA-256", hr=110, unit="TH/s", power=3300, price=820),
+    # ---------------- kHeavyHash (KAS) ----------------
     dict(slug="iceriver-ks7", name="IceRiver KS7", brand="IceRiver", algo="kHeavyHash", hr=30, unit="TH/s", power=3500, price=5600),
     dict(slug="antminer-ks5-pro", name="Antminer KS5 Pro", brand="Bitmain", algo="kHeavyHash", hr=21, unit="TH/s", power=3150, price=3200),
+    dict(slug="antminer-ks5", name="Antminer KS5", brand="Bitmain", algo="kHeavyHash", hr=20, unit="TH/s", power=3000, price=2900),
+    dict(slug="iceriver-ks5m", name="IceRiver KS5M", brand="IceRiver", algo="kHeavyHash", hr=15, unit="TH/s", power=3400, price=2400),
     dict(slug="antminer-ks5l", name="Antminer KS5L", brand="Bitmain", algo="kHeavyHash", hr=12, unit="TH/s", power=1850, price=1700),
+    dict(slug="antminer-ks3", name="Antminer KS3", brand="Bitmain", algo="kHeavyHash", hr=8.3, unit="TH/s", power=3188, price=1100),
+    dict(slug="iceriver-ks3", name="IceRiver KS3", brand="IceRiver", algo="kHeavyHash", hr=8, unit="TH/s", power=3200, price=1050),
     dict(slug="iceriver-ks3m", name="IceRiver KS3M", brand="IceRiver", algo="kHeavyHash", hr=6, unit="TH/s", power=3400, price=800),
+    dict(slug="goldshell-e-ka1m", name="Goldshell E-KA1M", brand="Goldshell", algo="kHeavyHash", hr=5.5, unit="TH/s", power=1500, price=900),
+    dict(slug="iceriver-ks2", name="IceRiver KS2", brand="IceRiver", algo="kHeavyHash", hr=2, unit="TH/s", power=1200, price=450),
+    dict(slug="goldshell-ka-box", name="Goldshell KA-BOX", brand="Goldshell", algo="kHeavyHash", hr=1.18, unit="TH/s", power=400, price=300),
+    dict(slug="iceriver-ks1", name="IceRiver KS1", brand="IceRiver", algo="kHeavyHash", hr=1, unit="TH/s", power=600, price=280),
+    dict(slug="iceriver-ks0-ultra", name="IceRiver KS0 Ultra", brand="IceRiver", algo="kHeavyHash", hr=0.4, unit="TH/s", power=100, price=150),
+    # ---------------- Scrypt (LTC+DOGE) ----------------
     dict(slug="antminer-l9", name="Antminer L9", brand="Bitmain", algo="Scrypt", hr=16, unit="GH/s", power=3360, price=7500),
-    dict(slug="antminer-l7", name="Antminer L7", brand="Bitmain", algo="Scrypt", hr=9.05, unit="GH/s", power=3425, price=4200),
+    dict(slug="volcminer-d1", name="VolcMiner D1", brand="VolcMiner", algo="Scrypt", hr=15, unit="GH/s", power=3450, price=4300),
+    dict(slug="elphapex-dg1-plus", name="Elphapex DG1+", brand="Elphapex", algo="Scrypt", hr=14, unit="GH/s", power=3950, price=4600),
     dict(slug="elphapex-dg1", name="Elphapex DG1", brand="Elphapex", algo="Scrypt", hr=11, unit="GH/s", power=3420, price=3600),
+    dict(slug="antminer-l7", name="Antminer L7", brand="Bitmain", algo="Scrypt", hr=9.05, unit="GH/s", power=3425, price=4200),
+    dict(slug="goldshell-lt6", name="Goldshell LT6", brand="Goldshell", algo="Scrypt", hr=3.35, unit="GH/s", power=3200, price=1400),
+    dict(slug="goldshell-lt5-pro", name="Goldshell LT5 Pro", brand="Goldshell", algo="Scrypt", hr=2.45, unit="GH/s", power=3100, price=1000),
+    dict(slug="innosilicon-a6-plus", name="Innosilicon A6+", brand="Innosilicon", algo="Scrypt", hr=2.2, unit="GH/s", power=2100, price=850),
+    dict(slug="goldshell-mini-doge-iii", name="Goldshell Mini-DOGE III", brand="Goldshell", algo="Scrypt", hr=0.7, unit="GH/s", power=400, price=350),
 ]
 
 COMPARE_PAIRS = [
@@ -164,7 +199,7 @@ TABLE_HEAD = """<thead><tr>
 def miners_table(miners, depth=0, autosort=True):
     rows = "\n".join(miner_row(m) for m in sorted(miners, key=lambda m: -profit(m)))
     r = "../" * depth
-    t = f'<table class="{"autosort" if autosort else ""}">{TABLE_HEAD}<tbody>{rows}</tbody></table>'
+    t = f'<table class="ranking-table {"autosort" if autosort else ""}">{TABLE_HEAD}<tbody>{rows}</tbody></table>'
     return t.replace("{{R}}", r)
 
 # ---------------- pages ----------------

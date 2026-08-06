@@ -25,13 +25,57 @@ a:hover{text-decoration:underline}
 .sidebar .foot{padding:14px 20px;font-size:11px;color:var(--ink3);border-top:1px solid var(--border)}
 .main{margin-left:220px;padding:28px 32px 80px;max-width:1180px}
 @media(max-width:900px){
-  .sidebar{position:static;width:100%;flex-direction:row;flex-wrap:wrap;padding:10px}
-  .sidebar .logo{border:0;padding:4px 10px}
-  .sidebar nav{display:flex;flex-wrap:wrap;padding:0}
-  .sidebar nav a{border-left:0;border-bottom:2px solid transparent;padding:8px 12px}
-  .sidebar nav a.active{border-bottom-color:var(--green)}
+  /* top bar: compact sticky header + horizontally scrollable pill nav */
+  .sidebar{position:sticky;top:0;width:100%;flex-direction:row;align-items:center;gap:8px;
+    padding:8px 10px;border-right:0;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+  .sidebar::-webkit-scrollbar{display:none}
+  .sidebar .logo{border:0;padding:0 6px 0 0;flex-shrink:0}
+  .sidebar .logo b{font-size:14px;white-space:nowrap}
+  .sidebar .logo span{display:none}
+  .sidebar nav{display:flex;flex-wrap:nowrap;padding:0;overflow-x:auto;scrollbar-width:none}
+  .sidebar nav::-webkit-scrollbar{display:none}
+  .sidebar nav a{border:1px solid var(--border);border-radius:99px;background:var(--panel);
+    padding:6px 13px;font-size:12.5px;white-space:nowrap;margin-right:6px}
+  .sidebar nav a.active{border-color:var(--green);color:var(--green);background:rgba(34,197,94,.08)}
   .sidebar .foot{display:none}
-  .main{margin-left:0;padding:18px 14px 60px}
+  .main{margin-left:0;padding:14px 12px 56px}
+  /* tighter type & spacing */
+  h1{font-size:21px;line-height:1.2}
+  h2{font-size:17px;margin:24px 0 10px}
+  .lede{font-size:13.5px}
+  .crumbs{font-size:11px;margin-bottom:10px}
+  .badge-live{font-size:10px;padding:2px 8px;margin-left:6px}
+  /* cards: 2-up, compact */
+  .cards{grid-template-columns:repeat(2,1fr);gap:10px;margin:14px 0}
+  .card{padding:12px}
+  .card .v{font-size:17px}
+  .card .s{font-size:11px}
+  .panel{padding:12px;margin:12px 0}
+  /* rate bar stacks nicely */
+  .rate-bar{gap:10px}
+  .rate-val{font-size:15px;min-width:0}
+  /* ranking table: scroll-x (panel wrapper) with sticky name column, secondary cols hidden */
+  .ranking-table{min-width:520px}
+  .ranking-table th:nth-child(3),.ranking-table td:nth-child(3),
+  .ranking-table th:nth-child(4),.ranking-table td:nth-child(4),
+  .ranking-table th:nth-child(7),.ranking-table td:nth-child(7){display:none}
+  .ranking-table th:first-child,.ranking-table td:first-child{
+    position:sticky;left:0;background:var(--panel);z-index:2;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+  tbody td{padding:9px 10px;font-size:13px}
+  .effbar{display:none}
+  /* chart: scrollable on small screens */
+  .panel:has(.bars){overflow-x:auto}
+  .bars{gap:6px;height:140px;min-width:600px}
+  .bars .b span{font-size:8.5px}
+  .bars .b em{font-size:9px}
+  /* misc */
+  .specgrid{grid-template-columns:repeat(2,1fr);gap:8px}
+  .spec .v{font-size:14px}
+  .form-grid{grid-template-columns:1fr}
+  .ad-slot{padding:18px 10px;margin:18px 0;font-size:10px}
+  .cta{width:100%;text-align:center}
+  .vs-wrap{grid-template-columns:1fr}
+  footer.site{margin-top:36px}
 }
 
 /* ---------- components ---------- */
