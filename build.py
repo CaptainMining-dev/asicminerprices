@@ -3,18 +3,24 @@
 Generates the full multi-page site into dist/. No dependencies.
 Data = plausible snapshot constants; swap HASHPRICE/prices with live API data later.
 """
-import json, os, shutil, datetime
+import json, os, re, shutil, datetime
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(ROOT, "dist")
 SITE = "https://asicminerprices.com"
-DEFAULT_RATE = 0.10
+DEFAULT_RATE = 0.072
 UPDATED = datetime.date.today().strftime("%B %d, %Y")
 
 # $ revenue per hashrate unit per day (snapshot fallback if data.json missing)
-HASHPRICE = {"SHA-256": 0.045, "kHeavyHash": 1.15, "Scrypt": 3.10}
-COIN = {"SHA-256": "BTC", "kHeavyHash": "KAS", "Scrypt": "LTC+DOGE"}
-ALGO_SLUG = {"SHA-256": "sha-256", "kHeavyHash": "kheavyhash", "Scrypt": "scrypt"}
+HASHPRICE = {"SHA-256": 0.045, "kHeavyHash": 1.15, "Scrypt": 3.10, "Equihash": 0.036,
+             "EtHash": 0.0013, "X11": 0.0097, "Eaglesong": 0.00026, "RandomX": 0.0266, "Blake3": 0.5}
+COIN = {"SHA-256": "BTC", "kHeavyHash": "KAS", "Scrypt": "LTC+DOGE", "Equihash": "ZEC",
+        "EtHash": "ETC", "X11": "DASH", "Eaglesong": "CKB", "RandomX": "XMR", "Blake3": "ALPH"}
+ALGO_SLUG = {"SHA-256": "sha-256", "kHeavyHash": "kheavyhash", "Scrypt": "scrypt", "Equihash": "equihash",
+             "EtHash": "ethash", "X11": "x11", "Eaglesong": "eaglesong", "RandomX": "randomx"}
+EFF_UNIT = {"TH/s": "J/TH", "GH/s": "J/GH", "kSol/s": "J/kSOL", "MH/s": "J/MH", "kH/s": "J/kH"}
+HP_UNIT = {"SHA-256": "TH", "kHeavyHash": "TH", "Scrypt": "GH", "Equihash": "kSol",
+           "EtHash": "MH", "X11": "GH", "Eaglesong": "TH", "RandomX": "kH", "Blake3": "TH"}
 
 # ---- live data layer: fetch_data.py writes data.json; override snapshot constants ----
 DATA_SOURCE = "snapshot constants (run fetch_data.py for live data)"
@@ -35,12 +41,22 @@ ALGO_BLURB = {
     "SHA-256": "SHA-256 is the algorithm behind Bitcoin. SHA-256 ASICs are the oldest and most competitive category — efficiency (J/TH) matters more than raw hashrate because margins are thin and difficulty adjusts every 2 weeks.",
     "kHeavyHash": "kHeavyHash is the proof-of-work algorithm of Kaspa (KAS), a blockDAG chain with 1-second blocks. Kaspa ASICs are newer, power-hungry, and currently offer some of the highest revenue per day — with higher coin-price risk.",
     "Scrypt": "Scrypt miners mine Litecoin and Dogecoin simultaneously through merged mining (AuxPoW) — one machine, two revenue streams. That dual income is why Scrypt rigs like the Antminer L9 dominate their category.",
+    "Equihash": "Equihash is the proof-of-work algorithm of Zcash (ZEC), the leading privacy coin. The Antminer Z15 family owns this category — with ZEC's rally these machines currently post the best profit-per-watt of any ASIC on the market.",
+    "EtHash": "EtHash (formerly Ethash) is the algorithm of Ethereum Classic (ETC). After Ethereum moved to proof-of-stake, its ASICs moved to ETC. EtHash machines are measured in MH/s and tend to be quiet and home-friendly.",
+    "X11": "X11 is the algorithm behind Dash (DASH), chained from 11 hash functions. A small, stable ASIC category dominated by Bitmain's Antminer D-series.",
+    "Eaglesong": "Eaglesong is the proof-of-work algorithm of Nervos Network (CKB). Bitmain's Antminer K7 and Goldshell's CK series compete in this mid-size category.",
+    "RandomX": "RandomX is the CPU-friendly algorithm of Monero (XMR), designed to resist ASICs — yet Bitmain's Antminer X-series finally cracked it. RandomX rigs are measured in kH/s and sip power compared to Bitcoin miners.",
+    "Blake3": "Blake3 is the ultra-fast hash at the core of Alephium (ALPH), a sharded proof-of-work chain. ALPH ASICs are a young, fast-moving category where IceRiver, Goldshell and Bitmain all compete.",
 }
 
 MINERS = [
     # name, brand, algo, hashrate, unit, power W, price USD (street-price estimates)
     # ---------------- SHA-256 (BTC) ----------------
     dict(slug="antminer-s23-hyd-3u", name="Antminer S23 Hyd 3U", brand="Bitmain", algo="SHA-256", hr=1160, unit="TH/s", power=11020, price=19500),
+    dict(slug="bitdeer-sealminer-a4-ultra-hydro", name="Bitdeer SealMiner A4 Ultra Hydro", brand="Bitdeer", algo="SHA-256", hr=886, unit="TH/s", power=8372, price=9741),
+    dict(slug="antminer-s23e-hyd-2u", name="Antminer S23e Hyd 2U", brand="Bitmain", algo="SHA-256", hr=865, unit="TH/s", power=8650, price=11699),
+    dict(slug="bitdeer-sealminer-a4-pro-hydro", name="Bitdeer SealMiner A4 Pro Hydro", brand="Bitdeer", algo="SHA-256", hr=680, unit="TH/s", power=7412, price=8449),
+    dict(slug="antminer-s21-xp-plus-hyd", name="Antminer S21 XP+ Hyd", brand="Bitmain", algo="SHA-256", hr=500, unit="TH/s", power=5500, price=8690),
     dict(slug="antminer-s23-hyd", name="Antminer S23 Hyd", brand="Bitmain", algo="SHA-256", hr=580, unit="TH/s", power=5510, price=9800),
     dict(slug="antminer-s23", name="Antminer S23", brand="Bitmain", algo="SHA-256", hr=318, unit="TH/s", power=3498, price=5400),
     dict(slug="antminer-s21-xp-hyd", name="Antminer S21 XP Hyd", brand="Bitmain", algo="SHA-256", hr=473, unit="TH/s", power=5676, price=9800),
@@ -81,6 +97,7 @@ MINERS = [
     dict(slug="iceriver-ks1", name="IceRiver KS1", brand="IceRiver", algo="kHeavyHash", hr=1, unit="TH/s", power=600, price=280),
     dict(slug="iceriver-ks0-ultra", name="IceRiver KS0 Ultra", brand="IceRiver", algo="kHeavyHash", hr=0.4, unit="TH/s", power=100, price=150),
     # ---------------- Scrypt (LTC+DOGE) ----------------
+    dict(slug="bitdeer-sealminer-dl1-hydro", name="Bitdeer SealMiner DL1 Hydro", brand="Bitdeer", algo="Scrypt", hr=52.5, unit="GH/s", power=7823, price=8999),
     dict(slug="antminer-l9", name="Antminer L9", brand="Bitmain", algo="Scrypt", hr=16, unit="GH/s", power=3360, price=7500),
     dict(slug="volcminer-d1", name="VolcMiner D1", brand="VolcMiner", algo="Scrypt", hr=15, unit="GH/s", power=3450, price=4300),
     dict(slug="elphapex-dg1-plus", name="Elphapex DG1+", brand="Elphapex", algo="Scrypt", hr=14, unit="GH/s", power=3950, price=4600),
@@ -90,7 +107,27 @@ MINERS = [
     dict(slug="goldshell-lt5-pro", name="Goldshell LT5 Pro", brand="Goldshell", algo="Scrypt", hr=2.45, unit="GH/s", power=3100, price=1000),
     dict(slug="innosilicon-a6-plus", name="Innosilicon A6+", brand="Innosilicon", algo="Scrypt", hr=2.2, unit="GH/s", power=2100, price=850),
     dict(slug="goldshell-mini-doge-iii", name="Goldshell Mini-DOGE III", brand="Goldshell", algo="Scrypt", hr=0.7, unit="GH/s", power=400, price=350),
+    # ---------------- Equihash (ZEC) ----------------
+    dict(slug="antminer-z15-pro", name="Antminer Z15 Pro", brand="Bitmain", algo="Equihash", hr=840, unit="kSol/s", power=2780, price=3317),
+    dict(slug="antminer-z15", name="Antminer Z15", brand="Bitmain", algo="Equihash", hr=420, unit="kSol/s", power=1510, price=749),
+    dict(slug="antminer-z9-mini", name="Antminer Z9 Mini", brand="Bitmain", algo="Equihash", hr=10, unit="kSol/s", power=300, price=120),
 ]
+
+# ---- extended catalog imported from asicminervalue.com benchmark (benchmark/amv_import.py) ----
+_extra_path = os.path.join(ROOT, "miners_extra.json")
+if os.path.exists(_extra_path):
+    with open(_extra_path) as _f:
+        for _m in json.load(_f):
+            MINERS.append(dict(slug=_m["slug"], name=_m["name"], brand=_m["brand"], algo=_m["algo"],
+                               hr=_m["hr"], unit=_m["unit"], power=_m["power"], price=int(_m["price"] or 0),
+                               release=_m.get("release")))
+# ---- AMV price/release overrides for base miners (benchmark/sync_prices.py) ----
+_ovr_path = os.path.join(ROOT, "prices_amv.json")
+if os.path.exists(_ovr_path):
+    _ovr = json.load(open(_ovr_path))
+    for _m in MINERS:
+        if _m["slug"] in _ovr:
+            _m.update(_ovr[_m["slug"]])
 
 COMPARE_PAIRS = [
     ("antminer-s21-xp", "antminer-s21-pro"),
@@ -100,6 +137,15 @@ COMPARE_PAIRS = [
     ("antminer-l9", "antminer-l7"),
     ("antminer-l9", "elphapex-dg1"),
 ]
+# auto-expand: all pairs among the 12 most profitable miners (deduped, ordered)
+_by_profit = sorted(MINERS, key=lambda m: -(m["hr"] * HASHPRICE[m["algo"]] - m["power"] / 1000 * 24 * DEFAULT_RATE))[:12]
+_seen = {tuple(sorted(p)) for p in COMPARE_PAIRS}
+for _i in range(len(_by_profit)):
+    for _j in range(_i + 1, len(_by_profit)):
+        _a, _b = _by_profit[_i]["slug"], _by_profit[_j]["slug"]
+        if tuple(sorted((_a, _b))) not in _seen:
+            _seen.add(tuple(sorted((_a, _b))))
+            COMPARE_PAIRS.append((_a, _b))
 
 # ---------------- helpers ----------------
 def rev(m): return m["hr"] * HASHPRICE[m["algo"]]
@@ -122,10 +168,38 @@ NAV = [
     ("/sha-256/", "SHA-256 (BTC)", "sha-256"),
     ("/kheavyhash/", "kHeavyHash (KAS)", "kheavyhash"),
     ("/scrypt/", "Scrypt (LTC+DOGE)", "scrypt"),
+    ("/equihash/", "Equihash (ZEC)", "equihash"),
+    ("/ethash/", "EtHash (ETC)", "ethash"),
+    ("/eaglesong/", "Eaglesong (CKB)", "eaglesong"),
+    ("/x11/", "X11 (DASH)", "x11"),
+    ("/randomx/", "RandomX (XMR)", "randomx"),
     ("/calculator/", "Calculator", "calculator"),
     ("/compare/", "Compare", "compare"),
     ("/guides/", "Guides", "guides"),
+    ("/blog/", "Blog", "blog"),
+    ("/contact/", "Contact", "contact"),
 ]
+
+# ---------------- inline CSS + self-hosted fonts (Core Web Vitals) ----------------
+# Fonts are self-hosted in assets/fonts/ (latin subsets, woff2) and the whole
+# stylesheet is inlined into <head> so there is NO render-blocking request.
+_FONT_SPECS = (("Inter", "inter", (400, 600, 700, 800)),
+               ("JetBrains Mono", "jetbrainsmono", (400, 600)))
+_INLINE_CSS_CACHE = None
+
+def inline_css(r):
+    global _INLINE_CSS_CACHE
+    if _INLINE_CSS_CACHE is None:
+        faces = []
+        for fam, fname, weights in _FONT_SPECS:
+            for w in weights:
+                faces.append(
+                    "@font-face{font-family:'%s';font-style:normal;font-weight:%d;"
+                    "font-display:swap;src:url('__R__assets/fonts/%s-%d.woff2') format('woff2')}"
+                    % (fam, w, fname, w))
+        with open(os.path.join(ROOT, "assets", "style.css"), encoding="utf-8") as f:
+            _INLINE_CSS_CACHE = "".join(faces) + f.read()
+    return _INLINE_CSS_CACHE.replace("__R__", r)
 
 def layout(title, desc, active, body, path, depth=0, extra_head=""):
     r = "../" * depth
@@ -146,9 +220,9 @@ def layout(title, desc, active, body, path, depth=0, extra_head=""):
 <meta property="og:type" content="website">
 <meta property="og:url" content="{canonical}">
 <meta property="og:site_name" content="ASIC Miner Prices">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{r}assets/style.css">
+<link rel="preload" href="{r}assets/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="{r}assets/fonts/jetbrainsmono-400.woff2" as="font" type="font/woff2" crossorigin>
+<style>{inline_css(r)}</style>
 {extra_head}
 </head>
 <body>
@@ -168,35 +242,35 @@ def layout(title, desc, active, body, path, depth=0, extra_head=""):
   <p>Profitability estimates from {DATA_SOURCE} ({UPDATED}) and your electricity cost. Not financial advice. Prices may contain affiliate links.</p>
 </footer>
 </div>
-<script src="{r}assets/app.js"></script>
+<script src="{r}assets/app.js?v=""" + datetime.datetime.now().strftime("%Y%m%d%H%M") + """\"></script>
 </body>
 </html>"""
 
 def rate_bar():
     return """<div class="panel rate-bar">
   <label for="elec-rate"><b>Electricity cost</b></label>
-  <input type="range" id="elec-rate" min="0.02" max="0.20" step="0.005" value="0.10">
-  <span class="rate-val" id="rate-val">$0.100/kWh</span>
+  <input type="range" id="elec-rate" min="20" max="200" step="1" value="72">
+  <span class="rate-val" id="rate-val">$0.072/kWh</span>
 </div>"""
 
 def miner_row(m):
     p = profit(m)
     e = eff(m)
-    roi = round(m["price"] / p) if p > 0 else None
+    be = breakeven(m)
     return f"""<tr data-hr="{m['hr']}" data-hp="{HASHPRICE[m['algo']]}" data-power="{m['power']}" data-price="{m['price']}" data-algo="{m['algo']}">
 <td><a class="miner-name" href="{{{{R}}}}miners/{m['slug']}/">{m['name']}</a> <span class="algo-pill">{m['algo']}</span></td>
 <td class="num" data-col-val="hr" data-sort="{m['hr']}">{m['hr']:g} {m['unit']}</td>
 <td class="num" data-col-val="power" data-sort="{m['power']}">{m['power']:,} W</td>
-<td class="num" data-col-val="eff" data-sort="{e}">{e:.1f} J/{'TH' if m['unit']=='TH/s' else 'GH'}<span class="effbar"><i style="width:{max(4,min(100,100-(e-12)*3)):.0f}%"></i></span></td>
+<td class="num" data-col-val="eff" data-sort="{e}">{e:.1f} {EFF_UNIT[m['unit']]}<span class="effbar"><i style="width:{max(4,min(100,100-(e-12)*3)):.0f}%"></i></span></td>
 <td class="num profit-cell" data-col-val="profit" data-sort="{p}">{pill(p)}</td>
 <td class="num" data-col-val="price" data-sort="{m['price']}">${m['price']:,}</td>
-<td class="num roi-cell" data-col-val="roi" data-sort="{roi if roi else 1e9}">{str(roi)+' d' if roi else '—'}</td>
+<td class="num" data-col-val="be" data-sort="{be}">${be:.3f}</td>
 </tr>"""
 
 TABLE_HEAD = """<thead><tr>
 <th data-col="miner">Miner</th><th class="num" data-col="hr">Hashrate</th><th class="num" data-col="power">Power</th>
 <th class="num" data-col="eff">Efficiency</th><th class="num" data-col="profit">Profit/day</th>
-<th class="num" data-col="price">Price</th><th class="num" data-col="roi">ROI</th></tr></thead>"""
+<th class="num" data-col="price">Price</th><th class="num" data-col="be">Break-even</th></tr></thead>"""
 
 def miners_table(miners, depth=0, autosort=True):
     rows = "\n".join(miner_row(m) for m in sorted(miners, key=lambda m: -profit(m)))
@@ -208,7 +282,7 @@ def miners_table(miners, depth=0, autosort=True):
 def page_index():
     ms = sorted(MINERS, key=lambda m: -profit(m))
     top = ms[0]
-    best_eff = min(MINERS, key=eff)
+    best_eff = min([m for m in MINERS if m["algo"] == "SHA-256"], key=eff)
     budget = max([m for m in MINERS if m["price"] <= 2000], key=lambda m: profit(m))
     maxp = max(profit(m) for m in MINERS)
     bars = "".join(
@@ -220,18 +294,18 @@ def page_index():
 <p class="lede">Real-time profitability ranking of {len(MINERS)} ASIC miners across Bitcoin (SHA-256), Kaspa (kHeavyHash) and Litecoin+Dogecoin (Scrypt). Set your electricity rate — every number on this page updates instantly.</p>
 
 <div class="cards">
-  <div class="card"><div class="k">Top miner profit</div><div class="v" style="color:var(--green)">{money(profit(top))}<span style="font-size:13px;color:var(--ink3)">/day</span></div><div class="s">{top['name']} @ ${DEFAULT_RATE}/kWh</div></div>
-  <div class="card"><div class="k">Miners tracked</div><div class="v">{len(MINERS)}</div><div class="s">3 algorithms · 4 brands</div></div>
+  <div class="card"><div class="k">Top miner profit</div><div class="v" style="color:var(--green)"><span data-dyn-profit data-hr="{top['hr']}" data-hp="{HASHPRICE[top['algo']]}" data-power="{top['power']}">{money(profit(top))}</span><span style="font-size:13px;color:var(--ink3)">/day</span></div><div class="s">{top['name']} @ <span class="dyn-rate">${DEFAULT_RATE}/kWh</span></div></div>
+  <div class="card"><div class="k">Miners tracked</div><div class="v">{len(MINERS)}</div><div class="s">{len(ALGO_SLUG)} algorithms · {len({m['brand'] for m in MINERS})} brands</div></div>
   <div class="card"><div class="k">Best efficiency</div><div class="v">{eff(best_eff):.1f}<span style="font-size:13px;color:var(--ink3)"> J/TH</span></div><div class="s">{best_eff['name']}</div></div>
-  <div class="card"><div class="k">{f"BTC ${LIVE.get('btc_usd', 0):,} · " if LIVE.get('btc_usd') else ""}Snapshot</div><div class="v" style="font-size:16px;padding-top:4px">{UPDATED}</div><div class="s">Hashprice: BTC ${HASHPRICE['SHA-256']}/TH · KAS ${HASHPRICE['kHeavyHash']}/TH · Scrypt ${HASHPRICE['Scrypt']}/GH</div></div>
+  <div class="card"><div class="k">{f"BTC ${LIVE.get('btc_usd', 0):,} · " if LIVE.get('btc_usd') else ""}Snapshot</div><div class="v" style="font-size:16px;padding-top:4px">{UPDATED}</div><div class="s">Hashprice: {" · ".join(f"{COIN[a]} ${HASHPRICE[a]}/{HP_UNIT[a]}" for a in ("SHA-256", "kHeavyHash", "Scrypt", "Equihash"))}</div></div>
 </div>
 
 {rate_bar()}
 
 <div class="cards">
-  <div class="card gold"><span class="tag gold">Best profitability</span><div class="v" style="font-size:18px"><a class="miner-name" href="miners/{top['slug']}/">{top['name']}</a></div><div class="s">{money(profit(top))}/day · ROI {round(top['price']/profit(top))} days</div></div>
-  <div class="card blue"><span class="tag blue">Best efficiency</span><div class="v" style="font-size:18px"><a class="miner-name" href="miners/{best_eff['slug']}/">{best_eff['name']}</a></div><div class="s">{eff(best_eff):.1f} J/TH · {money(profit(best_eff))}/day</div></div>
-  <div class="card violet"><span class="tag violet">Best budget</span><div class="v" style="font-size:18px"><a class="miner-name" href="miners/{budget['slug']}/">{budget['name']}</a></div><div class="s">${budget['price']:,} · {money(profit(budget))}/day</div></div>
+  <div class="card gold"><span class="tag gold">Best profitability</span><div class="v" style="font-size:18px"><a class="miner-name" href="miners/{top['slug']}/">{top['name']}</a></div><div class="s"><span data-dyn-profit data-hr="{top['hr']}" data-hp="{HASHPRICE[top['algo']]}" data-power="{top['power']}">{money(profit(top))}</span>/day · break-even ${breakeven(top):.3f}/kWh</div></div>
+  <div class="card blue"><span class="tag blue">Best efficiency</span><div class="v" style="font-size:18px"><a class="miner-name" href="miners/{best_eff['slug']}/">{best_eff['name']}</a></div><div class="s">{eff(best_eff):.1f} J/TH · <span data-dyn-profit data-hr="{best_eff['hr']}" data-hp="{HASHPRICE[best_eff['algo']]}" data-power="{best_eff['power']}">{money(profit(best_eff))}</span>/day</div></div>
+  <div class="card violet"><span class="tag violet">Best budget</span><div class="v" style="font-size:18px"><a class="miner-name" href="miners/{budget['slug']}/">{budget['name']}</a></div><div class="s">${budget['price']:,} · <span data-dyn-profit data-hr="{budget['hr']}" data-hp="{HASHPRICE[budget['algo']]}" data-power="{budget['power']}">{money(profit(budget))}</span>/day</div></div>
 </div>
 
 <div class="ad-slot">Advertisement — AdSense leaderboard 728×90</div>
@@ -248,27 +322,52 @@ def page_index():
 </div>
 <div class="panel" style="overflow-x:auto">{miners_table(MINERS)}</div>
 
+<h2>Buy through our vendor &amp; hosting network</h2>
+<p class="lede">We're plugged into the supply side of mining: <b>50+ verified machine vendors</b> — manufacturers, authorized distributors and vetted resellers — plus <b>30+ partner hosting facilities</b> across North America and beyond. One inquiry reaches the whole network.</p>
+<div class="cards">
+  <div class="card"><div class="k">Machine sourcing</div><div class="v">50+<span style="font-size:13px;color:var(--ink3)"> vendors</span></div><div class="s">Bitmain, MicroBT, IceRiver, Canaan &amp; verified resellers — live stock, real delivered pricing, no bait listings</div></div>
+  <div class="card"><div class="k">Hosting partners</div><div class="v">30+<span style="font-size:13px;color:var(--ink3)"> facilities</span></div><div class="s">$0.04–0.07/kWh all-in — US, Canada, Paraguay, Ethiopia &amp; more, with dashboards and insurance options</div></div>
+  <div class="card"><div class="k">One inquiry, full market</div><div class="v">24h<span style="font-size:13px;color:var(--ink3)"> response</span></div><div class="s">Tell us the model + quantity — we query the network and come back with the best available price &amp; hosting match</div></div>
+</div>
+<div class="panel" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+  <a class="cta" href="contact/">Request a quote — it's free →</a>
+  <a class="cta secondary" href="contact/?topic=hosting">Find hosting for your machines</a>
+</div>
+
 <div class="ad-slot">Advertisement — AdSense responsive</div>
 
 <div class="prose">
 <h2>How ASIC miner profitability works</h2>
 <p>An ASIC miner's daily profit is its mining revenue minus electricity cost. Revenue depends on the coin's price, network difficulty and block reward — captured in the <b>hashprice</b> (dollars earned per unit of hashrate per day). Electricity cost is simply power draw × 24h × your kWh rate, which is why the rate slider above is the single most important input: a miner profitable at $0.05/kWh can lose money at $0.15/kWh.</p>
-<p>Before buying, check the <b>ROI in days</b> (machine price ÷ daily profit) and the <b>break-even electricity price</b> on each miner's page. Use our <a href="calculator/">profitability calculator</a> for pool fees and custom scenarios, or <a href="compare/">compare two miners head-to-head</a>.</p>
+<p>Before buying, check the <b>break-even electricity price</b> on each miner's page — the maximum rate at which the machine still makes money. Use our <a href="calculator/">profitability calculator</a> for pool fees and custom scenarios, or <a href="compare/">compare two miners head-to-head</a>.</p>
 </div>"""
     faq = {
         "@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [
             {"@type": "Question", "name": "What is the most profitable ASIC miner right now?",
-             "acceptedAnswer": {"@type": "Answer", "text": f"At a $0.10/kWh electricity rate, the {top['name']} currently leads at about {money(profit(top))} per day before pool fees."}},
+             "acceptedAnswer": {"@type": "Answer", "text": f"At a ${DEFAULT_RATE}/kWh electricity rate (the typical industrial average), the {top['name']} currently leads at about {money(profit(top))} per day before pool fees."}},
             {"@type": "Question", "name": "How is ASIC miner profitability calculated?",
              "acceptedAnswer": {"@type": "Answer", "text": "Daily profit = (hashrate × hashprice) − (power in kW × 24 × electricity rate). Hashprice bundles coin price, network difficulty and block reward into one number."}},
             {"@type": "Question", "name": "What electricity rate do I need for mining to be profitable?",
              "acceptedAnswer": {"@type": "Answer", "text": "Each miner has a break-even electricity price listed on its page. Most profitable operations pay $0.02–$0.06/kWh; above $0.12/kWh only the newest generation stays profitable."}},
         ]}
     html = layout("Most Profitable ASIC Miners — Live Profitability & Prices | ASIC Miner Prices",
-                  f"Live ranking of {len(MINERS)} ASIC miners by daily profit. Compare Bitcoin, Kaspa and Scrypt miners, set your electricity rate and find ROI before you buy.",
+                  f"Live ranking of {len(MINERS)} ASIC miners by daily profit. Compare Bitcoin, Kaspa and Scrypt miners, set your electricity rate and find your break-even point before you buy.",
                   "overview", body, "/", 0,
                   f'<script type="application/ld+json">{json.dumps(faq)}</script>')
     write("index.html", html)
+
+def miner_description(m, coin, e, p, be):
+    """Unique 2-3 sentence description per miner from its own data."""
+    rel = f" Released in {m['release']}, it" if m.get("release") else " It"
+    tier = "industrial-grade" if m["power"] >= 3000 else ("mid-power" if m["power"] >= 800 else "quiet home-class")
+    scrypt_note = " Because Scrypt merged-mines Litecoin and Dogecoin, every hash earns two coins at once." if m["algo"] == "Scrypt" else ""
+    return (f"<p>The <b>{m['name']}</b> is a {tier} {m['algo']} ASIC miner from {m['brand']}, "
+            f"delivering <b>{m['hr']:g} {m['unit']}</b> for <b>{m['power']:,} W</b> of power draw — "
+            f"an efficiency of <b>{e:.1f} {EFF_UNIT[m['unit']]}</b>.{scrypt_note}</p>"
+            f"<p>{rel.strip()} targets the {coin} market: at today's network conditions ({UPDATED}) it produces about "
+            f"<b>{money(rev(m))}/day</b> in {coin} revenue, or <b>{money(p)}/day</b> net of electricity at ${DEFAULT_RATE}/kWh, "
+            f"and stays in the green down to a break-even rate of <b>${be:.3f}/kWh</b>. "
+            f"Street price is around <b>${m['price']:,}</b> — request a quote below for live stock and delivery times.</p>")
 
 def page_miner(m):
     p = profit(m)
@@ -286,13 +385,13 @@ def page_miner(m):
     rel = "".join(f'<div class="card"><div class="k">{x["algo"]}</div><div class="v" style="font-size:16px"><a class="miner-name" href="../{x["slug"]}/">{x["name"]}</a></div><div class="s">{money(profit(x))}/day · ${x["price"]:,}</div></div>' for x in related)
     faqs = [
         (f"Is the {m['name']} profitable?", f"At ${DEFAULT_RATE}/kWh the {m['name']} earns about {money(rev(m))}/day in revenue and {money(p)}/day in net profit. Its break-even electricity price is ${be:.3f}/kWh — above that rate it mines at a loss."),
-        (f"How long is the ROI on a {m['name']}?", (f"At ${m['price']:,} and {money(p)}/day net profit, the simple payback period is about {roi} days at current network conditions." if roi else f"At ${DEFAULT_RATE}/kWh the {m['name']} is currently not profitable, so ROI cannot be reached. Lower your electricity cost below ${be:.3f}/kWh.")),
+        (f"What electricity rate does the {m['name']} need?", f"The {m['name']} breaks even at ${be:.3f}/kWh at current network conditions — below that rate it earns {money(p)}/day net at ${DEFAULT_RATE}/kWh. Miners with access to industrial power ($0.04–0.07/kWh) have the healthiest margins."),
         (f"What does the {m['name']} mine?", f"The {m['name']} is a {m['algo']} miner. It mines {coin}." + (" Scrypt miners mine Litecoin and Dogecoin simultaneously via merged mining." if m["algo"] == "Scrypt" else "")),
     ]
     faq_html = "".join(f"<details><summary>{q}</summary><p>{a}</p></details>" for q, a in faqs)
     ld_product = {"@context": "https://schema.org", "@type": "Product", "name": m["name"],
                   "brand": {"@type": "Brand", "name": m["brand"]},
-                  "description": f"{m['name']} {m['algo']} ASIC miner: {m['hr']:g} {m['unit']}, {m['power']}W, {e:.1f} J/{'TH' if m['unit']=='TH/s' else 'GH'}.",
+                  "description": f"{m['name']} {m['algo']} ASIC miner: {m['hr']:g} {m['unit']}, {m['power']}W, {e:.1f} {EFF_UNIT[m['unit']]}.",
                   "offers": {"@type": "Offer", "price": m["price"], "priceCurrency": "USD", "availability": "https://schema.org/InStock"}}
     ld_faq = {"@context": "https://schema.org", "@type": "FAQPage",
               "mainEntity": [{"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in faqs]}
@@ -300,6 +399,10 @@ def page_miner(m):
         {"@type": "ListItem", "position": 1, "name": "Home", "item": SITE + "/"},
         {"@type": "ListItem", "position": 2, "name": m["algo"] + " miners", "item": SITE + "/" + ALGO_SLUG[m["algo"]] + "/"},
         {"@type": "ListItem", "position": 3, "name": m["name"]}]}
+    rel_year = ""
+    if m.get("release"):
+        rel_year = f'<div class="spec"><div class="k">Release</div><div class="v">{m["release"]}</div></div>'
+    desc = miner_description(m, coin, e, p, be)
     body = f"""
 <div class="crumbs"><a href="../../">Home</a> / <a href="../../{ALGO_SLUG[m['algo']]}/">{m['algo']} miners</a> / {m['name']}</div>
 <h1>{m['name']} profitability &amp; price <span class="badge-live"><i></i>LIVE</span></h1>
@@ -307,20 +410,25 @@ def page_miner(m):
 
 <div class="specgrid">
   <div class="spec"><div class="k">Algorithm</div><div class="v">{m['algo']}</div></div>
+  <div class="spec"><div class="k">Brand</div><div class="v"><a href="../../brands/{brand_slug(m['brand'])}/" style="color:var(--blue)">{m['brand']}</a></div></div>
   <div class="spec"><div class="k">Coins</div><div class="v">{coin}</div></div>
   <div class="spec"><div class="k">Hashrate</div><div class="v">{m['hr']:g} {m['unit']}</div></div>
   <div class="spec"><div class="k">Power</div><div class="v">{m['power']:,} W</div></div>
-  <div class="spec"><div class="k">Efficiency</div><div class="v">{e:.1f} J/{'TH' if m['unit']=='TH/s' else 'GH'}</div></div>
+  <div class="spec"><div class="k">Efficiency</div><div class="v">{e:.1f} {EFF_UNIT[m['unit']]}</div></div>
+  {rel_year}
   <div class="spec"><div class="k">Est. price</div><div class="v">${m['price']:,}</div></div>
   <div class="spec"><div class="k">Revenue/day</div><div class="v">{money(rev(m))}</div></div>
   <div class="spec"><div class="k">Break-even elec.</div><div class="v">${be:.3f}</div></div>
 </div>
 
 <div class="panel" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
-  <a class="cta" href="#" rel="sponsored nofollow">Check {m['name']} price →</a>
-  <a class="cta secondary" href="#" rel="sponsored nofollow">Get hosting quote</a>
-  <span style="font-size:12px;color:var(--ink3)">Affiliate links — we may earn a commission</span>
+  <a class="cta" href="../../contact/?miner={m['slug']}">Request {m['name']} quote →</a>
+  <a class="cta secondary" href="../../contact/?topic=hosting&miner={m['slug']}">Get hosting quote</a>
+  <span style="font-size:12px;color:var(--ink3)">We query 50+ vendors &amp; 30+ hosting partners — reply within 24h</span>
 </div>
+
+<h2>About the {m['name']}</h2>
+<div class="prose">{desc}</div>
 
 <div class="ad-slot">Advertisement — AdSense rectangle 336×280</div>
 
@@ -329,8 +437,8 @@ def page_miner(m):
 <thead><tr><th class="num">Rate ($/kWh)</th><th class="num">Cost/day</th><th class="num">Revenue/day</th><th class="num">Net profit/day</th><th></th></tr></thead>
 <tbody>{rows}</tbody></table></div>
 
-<h2>ROI at current rates</h2>
-<div class="prose"><p>{(f'At <b>${m["price"]:,}</b> and <b>{money(p)}/day</b> net profit, the {m["name"]} pays itself back in roughly <b>{roi} days</b> at the {UPDATED} network snapshot. Difficulty increases and coin-price moves will shift this number — recheck before ordering.' if roi else f'At ${DEFAULT_RATE}/kWh the {m["name"]} is currently unprofitable ({money(p)}/day). You need electricity below <b>${be:.3f}/kWh</b> to break even.')}</p></div>
+<h2>Break-even electricity price</h2>
+<div class="prose"><p>{(f'The {m["name"]} currently earns <b>{money(p)}/day</b> net at ${DEFAULT_RATE}/kWh ({UPDATED} snapshot). It stays profitable as long as your electricity costs less than <b>${be:.3f}/kWh</b> — its break-even rate. Difficulty increases and coin-price moves will shift this number — recheck before ordering.' )}</p></div>
 
 <h2>FAQ — {m['name']}</h2>
 <div class="faq">{faq_html}</div>
@@ -341,9 +449,50 @@ def page_miner(m):
             f'<script type="application/ld+json">{json.dumps(ld_faq)}</script>'
             f'<script type="application/ld+json">{json.dumps(ld_bc)}</script>')
     html = layout(f"{m['name']} Profitability, Price & Specs — {m['algo']} Miner | ASIC Miner Prices",
-                  f"{m['name']} mining profitability: {money(p)}/day at $0.10/kWh. Full specs, ROI, break-even electricity price and where to buy the {m['brand']} {m['name']}.",
+                  f"{m['name']} mining profitability: {money(p)}/day at ${DEFAULT_RATE}/kWh. Full specs, break-even electricity price and where to buy the {m['brand']} {m['name']}.",
                   ALGO_SLUG[m["algo"]], body, f"/miners/{m['slug']}/", 2, head)
     write(f"miners/{m['slug']}/index.html", html)
+
+BRAND_BLURB = {
+    "Bitmain": "Bitmain is the largest ASIC manufacturer on earth — its Antminer line dominates Bitcoin (SHA-256), Litecoin/Dogecoin (Scrypt) and Kaspa (kHeavyHash) mining. S21-generation machines are the current industry benchmark for efficiency.",
+    "MicroBT": "MicroBT's Whatsminer line is the strongest alternative to Bitmain for Bitcoin mining, known for robust build quality and stable firmware. The M60 series competes head-to-head with the Antminer S21 family.",
+    "IceRiver": "IceRiver is the reference Kaspa (kHeavyHash) manufacturer, consistently shipping the most efficient KAS miners first. Its KS series sets the pace for the Kaspa ASIC market.",
+    "Canaan": "Canaan (Avalon) invented the Bitcoin ASIC in 2013. Its Avalon line offers reliable air-cooled and home-class quiet miners, often at aggressive prices.",
+    "Goldshell": "Goldshell specializes in compact, lower-power ASICs — the go-to brand for home miners targeting altcoins with quiet, plug-and-play boxes.",
+    "Elphapex": "Elphapex is a newer manufacturer with competitive Scrypt and SHA-256 machines, often undercutting incumbents on price per terahash.",
+    "iPollo": "iPollo builds altcoin ASICs (ETHash/ETC, Grin, and others) and compact home miners.",
+    "Innosilicon": "Innosilicon is a veteran ASIC design house with a wide altcoin catalog; its older Scrypt and SHA-256 units trade actively on the used market.",
+    "StrongU": "StrongU shipped popular SHA-256 and altcoin miners; remaining units are mostly second-hand today.",
+    "Ebang": "Ebang's Ebit line covers budget SHA-256 machines, mostly traded on the secondary market.",
+    "ElphaPex": "ElphaPex is a newer manufacturer with competitive Scrypt and SHA-256 machines, often undercutting incumbents on price per terahash.",
+}
+
+def brand_slug(brand):
+    return re.sub(r"[^a-z0-9]+", "-", brand.lower()).strip("-")
+
+def page_brand(brand):
+    ms = sorted([m for m in MINERS if m["brand"] == brand], key=lambda m: -profit(m))
+    if not ms:
+        return
+    coin_list = sorted({m["algo"] for m in ms})
+    blurb = BRAND_BLURB.get(brand, f"{brand} ASIC miners — full lineup with live profitability and prices.")
+    top = ms[0]
+    body = f"""
+<div class="crumbs"><a href="../">Home</a> / {brand} miners</div>
+<h1>{brand} miners — full lineup <span class="badge-live"><i></i>LIVE</span></h1>
+<p class="lede">{blurb}</p>
+<div class="cards">
+  <div class="card"><div class="k">Top {brand} miner</div><div class="v" style="font-size:18px"><a class="miner-name" href="../miners/{top['slug']}/">{top['name']}</a></div><div class="s">{money(profit(top))}/day net</div></div>
+  <div class="card"><div class="k">Models tracked</div><div class="v">{len(ms)}</div><div class="s">{" · ".join(coin_list)}</div></div>
+  <div class="card"><div class="k">Price range</div><div class="v" style="font-size:18px">${min(m['price'] for m in ms):,} – ${max(m['price'] for m in ms):,}</div><div class="s">street prices, updated {UPDATED}</div></div>
+</div>
+<h2>All {brand} miners by profitability</h2>
+<div class="panel" style="overflow-x:auto">{miners_table(ms)}</div>
+<div class="prose"><p>Need a quote on a {brand} machine? We source directly from {brand} and its authorized distributors through our vendor network — <a href="../contact/">request a live quote</a> and we'll confirm stock and delivered pricing within 24 hours.</p></div>"""
+    html = layout(f"{brand} Miners — Full Lineup, Prices & Profitability | ASIC Miner Prices",
+                  f"All {len(ms)} {brand} ASIC miners ranked by live profitability: specs, prices, break-even electricity rates. {blurb[:110]}",
+                  "overview", body, f"/brands/{brand_slug(brand)}/", 1)
+    write(f"brands/{brand_slug(brand)}/index.html", html)
 
 def page_algo(algo):
     ms = sorted([m for m in MINERS if m["algo"] == algo], key=lambda m: -profit(m))
@@ -357,7 +506,7 @@ def page_algo(algo):
 <div class="cards">
   <div class="card"><div class="k">Top {algo} miner</div><div class="v" style="font-size:18px"><a class="miner-name" href="../miners/{top['slug']}/">{top['name']}</a></div><div class="s">{money(profit(top))}/day net</div></div>
   <div class="card"><div class="k">Miners tracked</div><div class="v">{len(ms)}</div><div class="s">{coin}</div></div>
-  <div class="card"><div class="k">Hashprice snapshot</div><div class="v" style="font-size:18px">${HASHPRICE[algo]}<span style="font-size:13px;color:var(--ink3)">/{'TH' if ms[0]['unit']=='TH/s' else 'GH'}/day</span></div><div class="s">{UPDATED}</div></div>
+  <div class="card"><div class="k">Hashprice snapshot</div><div class="v" style="font-size:18px">${HASHPRICE[algo]}<span style="font-size:13px;color:var(--ink3)">/{EFF_UNIT[ms[0]['unit']].split('/')[1]}/day</span></div><div class="s">{UPDATED}</div></div>
 </div>
 
 {rate_bar()}
@@ -369,11 +518,11 @@ def page_algo(algo):
 
 <div class="prose">
 <h2>Choosing a {algo} miner</h2>
-<p>Within {algo}, the decision comes down to three numbers: <b>efficiency</b> (lower J/{'TH' if ms[0]['unit']=='TH/s' else 'GH'} survives difficulty increases longer), <b>daily profit at your electricity rate</b>, and <b>payback period</b>. New-generation machines cost more per unit of hashrate but stay profitable at electricity rates that kill older hardware.</p>
+<p>Within {algo}, the decision comes down to three numbers: <b>efficiency</b> (lower {EFF_UNIT[ms[0]['unit']]} survives difficulty increases longer), <b>daily profit at your electricity rate</b>, and <b>break-even electricity price</b>. New-generation machines cost more per unit of hashrate but stay profitable at electricity rates that kill older hardware.</p>
 <p>Not sure between two models? Use the <a href="../compare/">head-to-head comparison</a> or run your exact numbers in the <a href="../calculator/">calculator</a>.</p>
 </div>"""
     html = layout(f"Best {algo} Miners — {coin} Profitability Ranking | ASIC Miner Prices",
-                  f"Live {algo} ({coin}) ASIC miner ranking: daily profit, efficiency, prices and ROI for {len(ms)} miners. Updated {UPDATED}.",
+                  f"Live {algo} ({coin}) ASIC miner ranking: daily profit, efficiency, prices and break-even rates for {len(ms)} miners. Updated {UPDATED}.",
                   ALGO_SLUG[algo], body, f"/{ALGO_SLUG[algo]}/", 1)
     write(f"{ALGO_SLUG[algo]}/index.html", html)
 
@@ -388,7 +537,7 @@ def page_calculator():
 <div id="calc-form">
 <div class="form-grid">
   <div><label>Miner</label><select id="calc-miner"></select></div>
-  <div><label>Electricity cost ($/kWh)</label><input type="number" id="calc-rate" value="0.10" min="0" max="1" step="0.005"></div>
+  <div><label>Electricity cost ($/kWh)</label><input type="number" id="calc-rate" value="0.072" min="0" max="1" step="0.005"></div>
   <div><label>Pool fee (%)</label><input type="number" id="calc-fee" value="1" min="0" max="10" step="0.1"></div>
 </div>
 </div>
@@ -429,7 +578,7 @@ def page_compare_index():
     body = f"""
 <div class="crumbs"><a href="../">Home</a> / Compare</div>
 <h1>Compare ASIC miners head-to-head</h1>
-<p class="lede">Side-by-side spec, efficiency, profit and ROI comparisons of the most-shopped ASIC miners.</p>
+<p class="lede">Side-by-side spec, efficiency, profit and break-even comparisons of the most-shopped ASIC miners.</p>
 <div class="cards">{cards}</div>"""
     html = layout("Compare ASIC Miners Head-to-Head | ASIC Miner Prices",
                   "Side-by-side ASIC miner comparisons: specs, efficiency, daily profit, price and payback period.",
@@ -445,7 +594,7 @@ def page_compare(sa, sb):
         ("Power draw", f'{a["power"]:,} W', f'{b["power"]:,} W', (a["power"], b["power"], "low")),
         ("Efficiency", f'{eff(a):.1f} vs {eff(b):.1f}'.split(" vs ")[0] + f' J/{"TH" if a["unit"]=="TH/s" else "GH"}', f'{eff(b):.1f} J/{"TH" if b["unit"]=="TH/s" else "GH"}', (eff(a), eff(b), "low")),
         ("Revenue/day", money(rev(a)), money(rev(b)), (rev(a), rev(b), "high")),
-        ("Profit/day @ $0.10", money(profit(a)), money(profit(b)), (profit(a), profit(b), "high")),
+        (f"Profit/day @ ${DEFAULT_RATE}", money(profit(a)), money(profit(b)), (profit(a), profit(b), "high")),
         ("Break-even elec.", f"${breakeven(a):.3f}", f"${breakeven(b):.3f}", (breakeven(a), breakeven(b), "high")),
         ("Est. price", f'${a["price"]:,}', f'${b["price"]:,}', (a["price"], b["price"], "low")),
     ]
@@ -459,20 +608,18 @@ def page_compare(sa, sb):
                 ca, cb = (' class="win"', "") if aw else ("", ' class="win"')
         rows += f'<tr><td>{label}</td><td class="num"{ca}>{va}</td><td class="num"{cb}>{vb}</td></tr>'
     pa, pb = profit(a), profit(b)
-    roi_a = round(a["price"] / pa) if pa > 0 else None
-    roi_b = round(b["price"] / pb) if pb > 0 else None
-    winner = a if (roi_a or 9e9) < (roi_b or 9e9) else b
+    winner = a if pa > pb else b
     loser = b if winner is a else a
     body = f"""
 <div class="crumbs"><a href="../../">Home</a> / <a href="../">Compare</a> / {a['name']} vs {b['name']}</div>
 <h1>{a['name']} vs {b['name']}</h1>
-<p class="lede">{a['algo']} head-to-head: which miner wins on profit, efficiency and payback at ${DEFAULT_RATE}/kWh (snapshot {UPDATED}).</p>
+<p class="lede">{a['algo']} head-to-head: which miner wins on profit, efficiency and break-even rate at ${DEFAULT_RATE}/kWh (snapshot {UPDATED}).</p>
 
 <div class="panel" style="overflow-x:auto"><table>
 <thead><tr><th></th><th class="num">{a['name']}</th><th class="num">{b['name']}</th></tr></thead>
 <tbody>{rows}</tbody></table></div>
 
-<div class="verdict"><b style="color:var(--ink)">Verdict:</b> The <b>{winner['name']}</b> wins this matchup — {money(profit(winner))}/day vs {money(profit(loser))}/day, payback ~{round(winner['price']/profit(winner)) if profit(winner)>0 else '—'} days{'. The ' + loser['name'] + ' only makes sense at a significantly lower purchase price or electricity rate.' if profit(loser) > 0 else ', while the ' + loser['name'] + ' is underwater at $0.10/kWh.'}</div>
+<div class="verdict"><b style="color:var(--ink)">Verdict:</b> The <b>{winner['name']}</b> wins this matchup — {money(profit(winner))}/day vs {money(profit(loser))}/day at ${DEFAULT_RATE}/kWh, with a break-even rate of ${breakeven(winner):.3f}/kWh{'. The ' + loser['name'] + ' only makes sense at a significantly lower purchase price or electricity rate.' if profit(loser) > 0 else ', while the ' + loser['name'] + f' is underwater at ${DEFAULT_RATE}/kWh.'}</div>
 
 <div class="vs-wrap">
   <div class="card"><div class="k">{a['brand']}</div><div class="v" style="font-size:16px"><a class="miner-name" href="../../miners/{a['slug']}/">{a['name']} full page →</a></div><div class="s">{money(pa)}/day · ${a['price']:,}</div></div>
@@ -481,7 +628,7 @@ def page_compare(sa, sb):
 
 <div class="ad-slot">Advertisement — AdSense responsive</div>"""
     html = layout(f"{a['name']} vs {b['name']} — Profitability & Specs Compared | ASIC Miner Prices",
-                  f"{a['name']} vs {b['name']}: daily profit, efficiency, break-even electricity and ROI compared head-to-head. Updated {UPDATED}.",
+                  f"{a['name']} vs {b['name']}: daily profit, efficiency and break-even electricity compared head-to-head. Updated {UPDATED}.",
                   "compare", body, f"/compare/{sa}-vs-{sb}/", 2)
     write(f"compare/{sa}-vs-{sb}/index.html", html)
 
@@ -515,6 +662,108 @@ GUIDES = [
 <p>In practice DOGE adds 30–60% on top of LTC revenue depending on the DOGE price, which is why Scrypt hashprice ($/GH/day) looks so rich compared to the LTC-only math. When comparing Scrypt miners, always use merged-mining revenue — any calculator showing LTC-only income is missing a third to half the picture.</p>"""),
 ]
 
+def page_blog_index(articles):
+    cards = "".join(
+        f'<div class="card"><div class="k">{a["date"]}</div><div class="v" style="font-size:15px;padding-top:4px"><a class="miner-name" href="{a["slug"]}/">{a["title"]}</a></div><div class="s">{a["desc"]}</div></div>'
+        for a in articles)
+    body = f"""
+<div class="crumbs"><a href="../">Home</a> / Blog</div>
+<h1>Mining blog — market analysis &amp; buyer guides</h1>
+<p class="lede">Weekly analysis from our desk: miner comparisons, real electricity math, hosting intel and market timing — written from live pricing across our vendor network.</p>
+<div class="cards">{cards}</div>"""
+    html = layout("Bitcoin & ASIC Mining Blog — Market Analysis | ASIC Miner Prices",
+                  "Weekly ASIC mining analysis: miner comparisons, profitability math, hosting insights and buying guides from live market data.",
+                  "blog", body, "/blog/", 1)
+    write("blog/index.html", html)
+
+def page_blog_post(a, articles):
+    with open(os.path.join(ROOT, "content", "articles", a["file"])) as f:
+        content = f.read()
+    others = "".join(f'<li><a href="../{o["slug"]}/">{o["title"]}</a></li>' for o in articles if o["slug"] != a["slug"]) or '<li><a href="../../contact/">Request a quote</a></li>'
+    ld = {"@context": "https://schema.org", "@type": "Article", "headline": a["title"],
+          "datePublished": a["date"], "author": {"@type": "Organization", "name": "ASIC Miner Prices"},
+          "description": a["desc"]}
+    body = f"""
+<div class="crumbs"><a href="../../">Home</a> / <a href="../">Blog</a> / {a['title']}</div>
+<h1>{a['title']}</h1>
+<p class="lede">{a['desc']} — <span style="color:var(--ink3)">{a['date']}</span></p>
+<div class="prose">{content}</div>
+<div class="panel" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:24px">
+  <a class="cta" href="../../contact/">Get a live quote from our vendor network →</a>
+  <span style="font-size:12px;color:var(--ink3)">50+ verified vendors · 30+ partner hosting facilities · reply within 24h</span>
+</div>
+<h2>Keep reading</h2>
+<div class="prose"><ul>{others}</ul></div>"""
+    head = f'<script type="application/ld+json">{json.dumps(ld)}</script>'
+    html = layout(f"{a['title']} | ASIC Miner Prices", a["desc"], "blog", body, f"/blog/{a['slug']}/", 2, head)
+    write(f"blog/{a['slug']}/index.html", html)
+
+def load_articles():
+    p = os.path.join(ROOT, "content", "articles.json")
+    if not os.path.exists(p):
+        return []
+    arts = json.load(open(p))
+    return sorted(arts, key=lambda a: a["date"], reverse=True)
+
+def page_contact():
+    body = """
+<div class="crumbs"><a href="../">Home</a> / Contact</div>
+<h1>Contact us — quotes, stock &amp; hosting</h1>
+<p class="lede">Tell us which miner you're looking at and your electricity rate — we reply within 24 hours with live pricing, stock and delivery options. You can also write directly to <b>contact@asicminerprices.com</b>.</p>
+
+<div class="panel" style="max-width:640px">
+<form id="contact-form" action="https://formsubmit.co/contact@asicminerprices.com" method="POST" style="display:grid;gap:14px">
+  <input type="hidden" name="_subject" value="New inquiry — asicminerprices.com">
+  <input type="hidden" name="_captcha" value="false">
+  <input type="hidden" name="_template" value="table">
+  <input type="text" name="_honey" style="display:none">
+  <label style="display:grid;gap:6px">Your name
+    <input type="text" name="name" required style="padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg2);color:var(--ink)"></label>
+  <label style="display:grid;gap:6px">Your email
+    <input type="email" name="email" required style="padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg2);color:var(--ink)"></label>
+  <label style="display:grid;gap:6px">Topic
+    <select name="topic" id="contact-topic" style="padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg2);color:var(--ink)">
+      <option value="quote">Price quote / stock</option>
+      <option value="hosting">Hosting quote</option>
+      <option value="bulk">Bulk / reseller order</option>
+      <option value="other">Other question</option>
+    </select></label>
+  <label style="display:grid;gap:6px">Miner of interest
+    <input type="text" name="miner" id="contact-miner" placeholder="e.g. Antminer S21 Pro" style="padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg2);color:var(--ink)"></label>
+  <label style="display:grid;gap:6px">Message
+    <textarea name="message" rows="5" required style="padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg2);color:var(--ink)"></textarea></label>
+  <button class="cta" type="submit" style="border:0;cursor:pointer">Send message →</button>
+</form>
+</div>
+<script>
+(function(){
+  const q = new URLSearchParams(location.search);
+  const miner = q.get('miner');
+  if (miner) {
+    const inp = document.getElementById('contact-miner');
+    inp.value = miner.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+  const topic = q.get('topic');
+  if (topic) document.getElementById('contact-topic').value = topic;
+})();
+</script>
+
+<div class="prose">
+<h2>Why buy through our network</h2>
+<p>We don't hold stock — we hold <b>relationships</b>. ASIC Miner Prices is connected to <b>50+ verified machine vendors</b> (manufacturers, authorized distributors and vetted resellers) and <b>30+ partner hosting facilities</b> across North America, South America and Africa. When you send one inquiry, we query the whole network and come back with the best live combination of price, stock and power rate.</p>
+<ul>
+  <li><b>Price quotes</b> — live street pricing and confirmed stock across our vendor network, not stale listing prices.</li>
+  <li><b>Hosting</b> — facility matching at $0.04–0.07/kWh all-in, with dashboards, insurance and contract terms we've already vetted.</li>
+  <li><b>Bulk orders</b> — container-scale pricing for farms and resellers, direct from distributors.</li>
+  <li><b>Second-hand &amp; rare models</b> — access to off-market batches our network doesn't list publicly.</li>
+</ul>
+</div>"""
+    html = layout("Contact — Miner Quotes, Stock & Hosting | ASIC Miner Prices",
+                  "Contact the ASIC Miner Prices team for live miner quotes, stock checks, hosting and bulk orders. Reply within 24 hours.",
+                  "contact", body, "/contact/", 1)
+    write("contact/index.html", html)
+
+
 def page_guides():
     cards = "".join(
         f'<div class="card"><div class="k">Guide</div><div class="v" style="font-size:15px;padding-top:4px"><a class="miner-name" href="{slug}/">{title}</a></div><div class="s">{desc}</div></div>'
@@ -544,8 +793,10 @@ def page_guide(slug, title, desc, content):
     write(f"guides/{slug}/index.html", html)
 
 def sitemap():
-    urls = ["/", "/sha-256/", "/kheavyhash/", "/scrypt/", "/calculator/", "/compare/", "/guides/"]
+    urls = ["/", "/calculator/", "/compare/", "/guides/", "/contact/", "/blog/"] + [f"/{s}/" for s in ALGO_SLUG.values()]
     urls += [f"/miners/{m['slug']}/" for m in MINERS]
+    urls += [f"/brands/{brand_slug(b)}/" for b in sorted({m['brand'] for m in MINERS})]
+    urls += [f"/blog/{a['slug']}/" for a in load_articles()]
     urls += [f"/compare/{a}-vs-{b}/" for a, b in COMPARE_PAIRS]
     urls += [f"/guides/{g[0]}/" for g in GUIDES]
     today = datetime.date.today().isoformat()
@@ -564,12 +815,19 @@ def main():
     page_index()
     for m in MINERS:
         page_miner(m)
-    for algo in HASHPRICE:
+    for algo in ALGO_SLUG:
         page_algo(algo)
     page_calculator()
     page_compare_index()
     for a, b in COMPARE_PAIRS:
         page_compare(a, b)
+    page_contact()
+    articles = load_articles()
+    page_blog_index(articles)
+    for a in articles:
+        page_blog_post(a, articles)
+    for b in sorted({m["brand"] for m in MINERS}):
+        page_brand(b)
     page_guides()
     for g in GUIDES:
         page_guide(*g)

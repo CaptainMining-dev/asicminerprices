@@ -1,0 +1,160 @@
+{
+ "antminer-s23-hyd-3u": {
+  "price": 7193,
+  "release": "Jan 2026"
+ },
+ "bitdeer-sealminer-a4-ultra-hydro": {
+  "release": "May 2026"
+ },
+ "antminer-s23e-hyd-2u": {
+  "release": "Apr 2026"
+ },
+ "bitdeer-sealminer-a4-pro-hydro": {
+  "release": "May 2026"
+ },
+ "antminer-s21-xp-hyd": {
+  "price": 1026,
+  "release": "Nov 2024"
+ },
+ "antminer-s23-hyd": {
+  "price": 11943,
+  "release": "Jan 2026"
+ },
+ "antminer-s23": {
+  "release": "Jan 2026"
+ },
+ "antminer-s21-xp": {
+  "price": 2882,
+  "release": "Sep 2024"
+ },
+ "antminer-s21-pro": {
+  "price": 2770,
+  "release": "Jul 2024"
+ },
+ "antminer-s21": {
+  "price": 1499,
+  "release": "Feb 2024"
+ },
+ "antminer-s21-hyd": {
+  "price": 3299,
+  "release": "Feb 2024"
+ },
+ "bitdeer-sealminer-a2": {
+  "release": "Feb 2025"
+ },
+ "whatsminer-m60s": {
+  "release": "Feb 2024"
+ },
+ "avalon-a1566": {
+  "price": 1170,
+  "release": "Oct 2024"
+ },
+ "whatsminer-m60": {
+  "price": 1230,
+  "release": "Feb 2024"
+ },
+ "antminer-s19-xp-hyd": {
+  "price": 1283,
+  "release": "Oct 2022"
+ },
+ "antminer-s19-xp": {
+  "price": 109,
+  "release": "Jul 2022"
+ },
+ "antminer-s19k-pro": {
+  "price": 379,
+  "release": "Apr 2023"
+ },
+ "antminer-s19j-pro": {
+  "release": "Jun 2021"
+ },
+ "antminer-s19-pro": {
+  "price": 252,
+  "release": "May 2020"
+ },
+ "antminer-s19": {
+  "price": 79,
+  "release": "May 2020"
+ },
+ "whatsminer-m30s": {
+  "price": 299,
+  "release": "Apr 2020"
+ },
+ "antminer-ks5-pro": {
+  "price": 1050,
+  "release": "Mar 2024"
+ },
+ "antminer-ks5": {
+  "price": 949,
+  "release": "Mar 2024"
+ },
+ "iceriver-ks5m": {
+  "price": 468,
+  "release": "May 2024"
+ },
+ "antminer-ks3": {
+  "release": "Aug 2023"
+ },
+ "iceriver-ks3": {
+  "release": "Sep 2023"
+ },
+ "iceriver-ks3m": {
+  "price": 100,
+  "release": "Oct 2023"
+ },
+ "goldshell-e-ka1m": {
+  "price": 1210,
+  "release": "Aug 2024"
+ },
+ "iceriver-ks2": {
+  "release": "Sep 2023"
+ },
+ "goldshell-ka-box": {
+  "release": "Mar 2024"
+ },
+ "iceriver-ks1": {
+  "release": "Sep 2023"
+ },
+ "iceriver-ks0-ultra": {
+  "price": 49,
+  "release": "May 2024"
+ },
+ "bitdeer-sealminer-dl1-hydro": {
+  "release": "Jun 2026"
+ },
+ "antminer-l9": {
+  "price": 3550,
+  "release": "May 2024"
+ },
+ "volcminer-d1": {
+  "release": "Oct 2024"
+ },
+ "elphapex-dg1": {
+  "price": 5100,
+  "release": "Feb 2024"
+ },
+ "antminer-l7": {
+  "price": 600,
+  "release": "Feb 2022"
+ },
+ "goldshell-lt6": {
+  "release": "Jan 2022"
+ },
+ "goldshell-lt5-pro": {
+  "release": "Aug 2021"
+ },
+ "goldshell-mini-doge-iii": {
+  "price": 229,
+  "release": "Nov 2023"
+ },
+ "antminer-z15-pro": {
+  "release": "Jun 2023"
+ },
+ "antminer-z15": {
+  "price": 2814,
+  "release": "Jun 2020"
+ },
+ "antminer-z9-mini": {
+  "release": "Jun 2018"
+ }
+}

@@ -6,8 +6,8 @@
 
   function currentRate() {
     var saved = parseFloat(localStorage.getItem(RATE_KEY));
-    if (!isNaN(saved)) return saved;
-    return slider ? parseFloat(slider.value) : 0.10;
+    if (!isNaN(saved)) return saved < 1 ? saved : saved / 1000; // legacy $ values vs slider milli-units
+    return slider ? parseFloat(slider.value) / 1000 : 0.072;
   }
 
   function fmt(x, dec) {
@@ -46,6 +46,19 @@
         return pb - pa;
       });
       rows.forEach(function (r) { tb.appendChild(r); });
+    });
+    // dynamic summary cards
+    document.querySelectorAll('[data-dyn-profit]').forEach(function (el) {
+      var p = parseFloat(el.dataset.hr) * parseFloat(el.dataset.hp) - (parseFloat(el.dataset.power) / 1000) * 24 * rate;
+      el.textContent = fmt(p);
+      el.style.color = p >= 0 ? 'var(--green)' : 'var(--red)';
+    });
+    document.querySelectorAll('[data-dyn-roi]').forEach(function (el) {
+      var p = parseFloat(el.dataset.hr) * parseFloat(el.dataset.hp) - (parseFloat(el.dataset.power) / 1000) * 24 * rate;
+      el.textContent = p > 0 ? 'ROI ' + Math.round(parseFloat(el.dataset.price) / p) + ' days' : 'not profitable at this rate';
+    });
+    document.querySelectorAll('.dyn-rate').forEach(function (el) {
+      el.textContent = '$' + rate.toFixed(3) + '/kWh';
     });
     // bar chart
     document.querySelectorAll('.bars .b i[data-hr]').forEach(function (bar) {

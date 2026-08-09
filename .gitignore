@@ -6,3 +6,10 @@ refresh.log
 __pycache__/
 .pylibs/
 .venv*/
+# local ops tooling (secrets / machine-specific)
+deploy.py
+visits_report.py
+cdp_driver.py
+chrome_relay.py
+benchmark/
+content/
